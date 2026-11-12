@@ -2,19 +2,12 @@
 
 Entrega contínua da aplicação **Pedidos Veloz**: do Docker Compose ao Kubernetes, com CI/CD, observabilidade (métricas, logs e traces) e infraestrutura como código.
 
-<!-- VIDEO -->
-**Vídeo pitch (YouTube):** _aguardando publicação._
-<!-- /VIDEO -->
-
 ## Entregáveis
 
-| Entregável | Arquivo |
-|---|---|
-| Parte teórica (PDF, 3 páginas) | [docs/01-relatorio-teorico.pdf](docs/01-relatorio-teorico.pdf) |
-| Parte prática (PDF, até 6 páginas) | [docs/02-relatorio-pratico.pdf](docs/02-relatorio-pratico.pdf) |
-| Relatório completo (teórico + prático) | [Relatorio_Completo_Loja_Veloz.pdf](Relatorio_Completo_Loja_Veloz.pdf) |
-| Roteiro do vídeo pitch | [docs/03-roteiro-video.md](docs/03-roteiro-video.md) |
-| Evidências da execução | [evidencias/](evidencias/) e [screenshots/](screenshots/) |
+- [Relatório final da Loja Veloz em PDF](Relatorio_Loja_Veloz_UniFECAF.pdf)
+- [Vídeo da apresentação no YouTube](https://youtu.be/XociYp9OuyI)
+- [Código do projeto no GitHub](https://github.com/barbaraleao-28/loja-veloz-devops)
+- [Registros dos testes](evidencias/) e [capturas de tela](screenshots/)
 
 ## Arquitetura
 
@@ -153,11 +146,3 @@ terraform -chdir=terraform fmt -check -recursive
 terraform -chdir=terraform validate
 terraform -chdir=terraform plan -var-file=environments/staging.tfvars   # requer credenciais AWS
 ```
-
-## 6. Regerar os PDFs e o link do vídeo
-Cole o link do YouTube em `docs/video-url.txt` e execute (requer Python 3 com as bibliotecas abaixo):
-```powershell
-pip install reportlab pypdf python-docx Pillow
-python docs/gerar_pdfs.py
-```
-O script gera os dois relatórios, o relatório completo e atualiza o link neste README.
