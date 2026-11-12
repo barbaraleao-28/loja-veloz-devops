@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pedidos-veloz-config
+  namespace: pedidos-veloz
+  labels:
+    app.kubernetes.io/part-of: loja-veloz-ecommerce
+data:
+  NODE_ENV: "production"
+  APP_VERSION: "1.2.1"
+  LOG_LEVEL: "info"
+  GATEWAY_PORT: "8080"
+  PEDIDOS_PORT: "3001"
+  PAGAMENTOS_PORT: "3002"
+  ESTOQUE_PORT: "3003"
+  PEDIDOS_SERVICE_URL: "http://pedidos-service.pedidos-veloz.svc.cluster.local:3001"
+  PAGAMENTOS_SERVICE_URL: "http://pagamentos-service.pedidos-veloz.svc.cluster.local:3002"
+  ESTOQUE_SERVICE_URL: "http://estoque-service.pedidos-veloz.svc.cluster.local:3003"
+  POSTGRES_HOST: "postgres-writer.pedidos-veloz.svc.cluster.local"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "pedidos_veloz"
+  REDIS_URL: "redis://veloz-redis.pedidos-veloz.svc.cluster.local:6379"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.observability.svc.cluster.local:4318"
+  OTEL_SERVICE_NAMESPACE: "loja-veloz-prod"

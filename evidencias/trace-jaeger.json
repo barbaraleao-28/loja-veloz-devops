@@ -1,0 +1,186 @@
+{
+  "data": [
+    {
+      "traceID": "b0ebe1bd261acdb34bbf3b3949b1b9f4",
+      "spans": [
+        {
+          "traceID": "b0ebe1bd261acdb34bbf3b3949b1b9f4",
+          "spanID": "4134a2eef65692ee",
+          "operationName": "POST /estoque/reservar",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "b0ebe1bd261acdb34bbf3b3949b1b9f4",
+              "spanID": "18be0bbcac5d81d3"
+            }
+          ],
+          "startTime": 1794415702850000,
+          "duration": 42375,
+          "tags": [
+            {
+              "key": "http.response.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            },
+            {
+              "key": "internal.span.format",
+              "type": "string",
+              "value": "otlp"
+            }
+          ],
+          "logs": [],
+          "processID": "p1",
+          "warnings": null
+        },
+        {
+          "traceID": "b0ebe1bd261acdb34bbf3b3949b1b9f4",
+          "spanID": "43f1515c8849dac6",
+          "operationName": "POST /api/pedidos",
+          "references": [],
+          "startTime": 1794415702744000,
+          "duration": 215436,
+          "tags": [
+            {
+              "key": "http.response.status_code",
+              "type": "int64",
+              "value": 201
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            },
+            {
+              "key": "internal.span.format",
+              "type": "string",
+              "value": "otlp"
+            }
+          ],
+          "logs": [],
+          "processID": "p2",
+          "warnings": null
+        },
+        {
+          "traceID": "b0ebe1bd261acdb34bbf3b3949b1b9f4",
+          "spanID": "18be0bbcac5d81d3",
+          "operationName": "POST /pedidos",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "b0ebe1bd261acdb34bbf3b3949b1b9f4",
+              "spanID": "43f1515c8849dac6"
+            }
+          ],
+          "startTime": 1794415702802000,
+          "duration": 143815,
+          "tags": [
+            {
+              "key": "http.response.status_code",
+              "type": "int64",
+              "value": 201
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            },
+            {
+              "key": "internal.span.format",
+              "type": "string",
+              "value": "otlp"
+            }
+          ],
+          "logs": [],
+          "processID": "p3",
+          "warnings": null
+        },
+        {
+          "traceID": "b0ebe1bd261acdb34bbf3b3949b1b9f4",
+          "spanID": "4d85eeb4c4ddaa16",
+          "operationName": "POST /pagamentos/processar",
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "b0ebe1bd261acdb34bbf3b3949b1b9f4",
+              "spanID": "18be0bbcac5d81d3"
+            }
+          ],
+          "startTime": 1794415702909000,
+          "duration": 2649,
+          "tags": [
+            {
+              "key": "http.response.status_code",
+              "type": "int64",
+              "value": 200
+            },
+            {
+              "key": "span.kind",
+              "type": "string",
+              "value": "server"
+            },
+            {
+              "key": "internal.span.format",
+              "type": "string",
+              "value": "otlp"
+            }
+          ],
+          "logs": [],
+          "processID": "p4",
+          "warnings": null
+        }
+      ],
+      "processes": {
+        "p1": {
+          "serviceName": "estoque-service",
+          "tags": [
+            {
+              "key": "otel.library.name",
+              "type": "string",
+              "value": "pedidos-veloz.http"
+            }
+          ]
+        },
+        "p2": {
+          "serviceName": "api-gateway",
+          "tags": [
+            {
+              "key": "otel.library.name",
+              "type": "string",
+              "value": "pedidos-veloz.http"
+            }
+          ]
+        },
+        "p3": {
+          "serviceName": "pedidos-service",
+          "tags": [
+            {
+              "key": "otel.library.name",
+              "type": "string",
+              "value": "pedidos-veloz.http"
+            }
+          ]
+        },
+        "p4": {
+          "serviceName": "pagamentos-service",
+          "tags": [
+            {
+              "key": "otel.library.name",
+              "type": "string",
+              "value": "pedidos-veloz.http"
+            }
+          ]
+        }
+      },
+      "warnings": null
+    }
+  ],
+  "total": 0,
+  "limit": 0,
+  "offset": 0,
+  "errors": null
+}

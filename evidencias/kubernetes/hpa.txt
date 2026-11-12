@@ -1,0 +1,74 @@
+# Teste do HPA no Kubernetes do Docker Desktop (metrics-server v0.7.2), 12/11/2026
+# scripts/testar-hpa.ps1 -DuracaoS 240 -Concorrencia 60 (carga de leitura gerada dentro do cluster)
+
+Carga iniciada por 240 s com 60 conexões. Acompanhando o HPA a cada 15 s...
+--- 00:14:49
+api-gateway-hpa       Deployment/api-gateway       cpu: 1%/70%                    2     10    2     17m
+pedidos-service-hpa   Deployment/pedidos-service   cpu: 2%/70%, memory: 10%/80%   3     12    3     17m
+--- 00:15:04
+api-gateway-hpa       Deployment/api-gateway       cpu: 25%/70%                   2     10    2     17m
+pedidos-service-hpa   Deployment/pedidos-service   cpu: 2%/70%, memory: 10%/80%   3     12    3     17m
+--- 00:15:19
+api-gateway-hpa       Deployment/api-gateway       cpu: 256%/70%                    2     10    2     17m
+pedidos-service-hpa   Deployment/pedidos-service   cpu: 104%/70%, memory: 11%/80%   3     12    3     17m
+--- 00:15:35
+api-gateway-hpa       Deployment/api-gateway       cpu: 328%/70%                    2     10    4     17m
+pedidos-service-hpa   Deployment/pedidos-service   cpu: 174%/70%, memory: 11%/80%   3     12    5     17m
+--- 00:15:50
+api-gateway-hpa       Deployment/api-gateway       cpu: 304%/70%                    2     10    8     18m
+pedidos-service-hpa   Deployment/pedidos-service   cpu: 167%/70%, memory: 13%/80%   3     12    6     18m
+--- 00:16:07
+api-gateway-hpa       Deployment/api-gateway       cpu: 182%/70%                    2     10    10    18m
+pedidos-service-hpa   Deployment/pedidos-service   cpu: 100%/70%, memory: 12%/80%   3     12    8     18m
+--- 00:16:23
+api-gateway-hpa       Deployment/api-gateway       cpu: 129%/70%                   2     10    10    18m
+pedidos-service-hpa   Deployment/pedidos-service   cpu: 91%/70%, memory: 12%/80%   3     12    8     18m
+--- 00:16:39
+api-gateway-hpa       Deployment/api-gateway       cpu: 101%/70%                   2     10    10    18m
+pedidos-service-hpa   Deployment/pedidos-service   cpu: 80%/70%, memory: 12%/80%   3     12    8     18m
+--- 00:16:54
+api-gateway-hpa       Deployment/api-gateway       cpu: 82%/70%                     2     10    10    19m
+pedidos-service-hpa   Deployment/pedidos-service   cpu: 101%/70%, memory: 11%/80%   3     12    8     19m
+--- 00:17:09
+api-gateway-hpa       Deployment/api-gateway       cpu: 71%/70%                    2     10    10    19m
+pedidos-service-hpa   Deployment/pedidos-service   cpu: 96%/70%, memory: 10%/80%   3     12    8     19m
+--- 00:17:24
+api-gateway-hpa       Deployment/api-gateway       cpu: 72%/70%                    2     10    10    19m
+pedidos-service-hpa   Deployment/pedidos-service   cpu: 90%/70%, memory: 10%/80%   3     12    10    19m
+--- 00:17:40
+api-gateway-hpa       Deployment/api-gateway       cpu: 70%/70%                    2     10    10    19m
+pedidos-service-hpa   Deployment/pedidos-service   cpu: 86%/70%, memory: 11%/80%   3     12    10    19m
+--- 00:17:55
+api-gateway-hpa       Deployment/api-gateway       cpu: 71%/70%                    2     10    10    20m
+pedidos-service-hpa   Deployment/pedidos-service   cpu: 84%/70%, memory: 11%/80%   3     12    10    20m
+--- 00:18:10
+api-gateway-hpa       Deployment/api-gateway       cpu: 71%/70%                    2     10    10    20m
+pedidos-service-hpa   Deployment/pedidos-service   cpu: 82%/70%, memory: 11%/80%   3     12    10    20m
+--- 00:18:25
+api-gateway-hpa       Deployment/api-gateway       cpu: 72%/70%                    2     10    10    20m
+pedidos-service-hpa   Deployment/pedidos-service   cpu: 87%/70%, memory: 11%/80%   3     12    10    20m
+--- 00:18:40
+api-gateway-hpa       Deployment/api-gateway       cpu: 72%/70%                    2     10    10    20m
+pedidos-service-hpa   Deployment/pedidos-service   cpu: 84%/70%, memory: 11%/80%   3     12    10    20m
+--- 00:18:56
+api-gateway-hpa       Deployment/api-gateway       cpu: 70%/70%                    2     10    10    21m
+pedidos-service-hpa   Deployment/pedidos-service   cpu: 82%/70%, memory: 11%/80%   3     12    10    21m
+--- 00:19:11
+api-gateway-hpa       Deployment/api-gateway       cpu: 68%/70%                    2     10    10    21m
+pedidos-service-hpa   Deployment/pedidos-service   cpu: 75%/70%, memory: 11%/80%   3     12    10    21m
+--- Resultado da carga
+{"total":110139,"por_status":{"200":110139},"sucesso_pct":100}
+--- Eventos de escala
+Após ~5 min sem carga o HPA volta ao mínimo (stabilizationWindowSeconds: 300).
+
+## Eventos SuccessfulRescale
+HORA                   HPA                   MENSAGEM
+2026-11-12T02:58:02Z   api-gateway-hpa       New size: 2; reason: Current number of replicas below Spec.MinReplicas
+2026-11-12T02:58:02Z   pedidos-service-hpa   New size: 3; reason: Current number of replicas below Spec.MinReplicas
+2026-11-12T03:15:19Z   api-gateway-hpa       New size: 4; reason: cpu resource utilization (percentage of request) above target
+2026-11-12T03:15:19Z   pedidos-service-hpa   New size: 5; reason: cpu resource utilization (percentage of request) above target
+2026-11-12T03:15:35Z   api-gateway-hpa       New size: 8; reason: cpu resource utilization (percentage of request) above target
+2026-11-12T03:15:35Z   pedidos-service-hpa   New size: 6; reason: cpu resource utilization (percentage of request) above target
+2026-11-12T03:15:50Z   api-gateway-hpa       New size: 10; reason: 
+2026-11-12T03:15:50Z   pedidos-service-hpa   New size: 8; reason: cpu resource utilization (percentage of request) above target
+2026-11-12T03:17:08Z   pedidos-service-hpa   New size: 10; reason: cpu resource utilization (percentage of request) above target

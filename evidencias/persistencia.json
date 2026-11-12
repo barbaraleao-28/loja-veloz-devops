@@ -1,0 +1,19 @@
+{
+  "pedido_id": "PED-BE18AC80",
+  "evento": {
+    "tipo": "PedidoCriado",
+    "payload": {
+      "sku": "SKU-MOU-04",
+      "status": "PAGO_E_CONFIRMADO",
+      "pedido_id": "PED-BE18AC80",
+      "cliente_id": "CLI-TESTE",
+      "valor_total": 289.5
+    },
+    "trace_id": "b0ebe1bd261acdb34bbf3b3949b1b9f4",
+    "criado_em": "2026-11-11T16:48:22.915Z",
+    "evento_id": "EVT-BBA2F023",
+    "agregado_id": "PED-BE18AC80"
+  },
+  "publicado": false,
+  "postgres": "PostgreSQL 16.15, compiled by Visual C++ build 1944, 64-bit"
+}

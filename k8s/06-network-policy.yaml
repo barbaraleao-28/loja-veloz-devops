@@ -1,0 +1,34 @@
+# ============================================================================
+# SEGURANÇA DE REDE (Zero-Trust): os serviços de backend só aceitam conexões
+# do api-gateway e do pedidos-service. O namespace observability pode coletar
+# as métricas (/metrics) de todas as réplicas.
+# ============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: restringir-acesso-backend
+  namespace: pedidos-veloz
+spec:
+  podSelector:
+    matchLabels:
+      tier: backend
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+        - podSelector:
+            matchLabels:
+              app: pedidos-service
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: observability
+      ports:
+        - protocol: TCP
+          port: 3001
+        - protocol: TCP
+          port: 3002
+        - protocol: TCP
+          port: 3003

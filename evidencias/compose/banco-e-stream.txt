@@ -1,0 +1,25 @@
+# PostgreSQL (outbox, estoque e reservas)
+ id | tipo_evento  | agregado_id  | publicado 
+----+--------------+--------------+-----------
+  1 | PedidoCriado | PED-475B842A | t
+(1 row)
+
+     sku     | quantidade_disponivel | quantidade_reservada 
+-------------+-----------------------+----------------------
+ SKU-MOU-04  |                   199 |                    8
+ SKU-NOTE-01 |                    45 |                    2
+(2 rows)
+
+  estado  | count 
+----------+-------
+ baixada  |     1
+ liberada |     1
+(2 rows)
+
+
+# Redis Streams: XRANGE pedidos:eventos
+1794451621518-0
+evento
+{"tipo":"PedidoCriado","payload":{"sku":"SKU-MOU-04","status":"PAGO_E_CONFIRMADO","pedido_id":"PED-475B842A","cliente_id":"CLI-TESTE","valor_total":289.5},"trace_id":"e2217ad7403d473fffc24b45a0f9a25a","criado_em":"2026-11-12T02:47:01.371Z","evento_id":"EVT-511F824B","agregado_id":"PED-475B842A"}
+
+# Compra de 11 notebooks: HTTP 422 (simulador recusou), reserva liberada e saldo de SKU-NOTE-01 igual ao inicial (45/2)

@@ -1,0 +1,208 @@
+name: loja-veloz-pedidos
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: veloz-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-pedidos_veloz}
+      POSTGRES_USER: ${POSTGRES_USER:-veloz_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-veloz_dev_secret_2026}
+    volumes:
+    - pgdata:/var/lib/postgresql/data
+    - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    ports:
+    - 127.0.0.1:5432:5432
+    networks:
+    - backend-net
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U ${POSTGRES_USER:-veloz_admin} -d ${POSTGRES_DB:-pedidos_veloz}
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  redis:
+    image: redis:7.2-alpine
+    container_name: veloz-redis-eventos
+    restart: unless-stopped
+    command:
+    - redis-server
+    - --appendonly
+    - 'yes'
+    ports:
+    - 127.0.0.1:6379:6379
+    networks:
+    - backend-net
+    healthcheck:
+      test:
+      - CMD
+      - redis-cli
+      - ping
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    volumes:
+    - redis_data:/data
+  estoque-service:
+    build:
+      context: ./services/estoque-service
+      dockerfile: Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-1.2.1}
+    image: ghcr.io/loja-veloz/estoque-service:${APP_VERSION:-1.2.1}
+    container_name: veloz-estoque-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      APP_VERSION: ${APP_VERSION:-1.2.1}
+      ESTOQUE_PORT: 3003
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-pedidos_veloz}
+      POSTGRES_USER: ${POSTGRES_USER:-veloz_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-veloz_dev_secret_2026}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+    - 127.0.0.1:3003:3003
+    networks:
+    - backend-net
+  pagamentos-service:
+    build:
+      context: ./services/pagamentos-service
+      dockerfile: Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-1.2.1}
+    image: ghcr.io/loja-veloz/pagamentos-service:${APP_VERSION:-1.2.1}
+    container_name: veloz-pagamentos-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      APP_VERSION: ${APP_VERSION:-1.2.1}
+      PAGAMENTOS_PORT: 3002
+      PAYMENT_PROVIDER_API_KEY: ${PAYMENT_PROVIDER_API_KEY:-sk_test_veloz_98f7a6d5c4b3a210}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+    ports:
+    - 127.0.0.1:3002:3002
+    networks:
+    - backend-net
+  pedidos-service:
+    build:
+      context: ./services/pedidos-service
+      dockerfile: Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-1.2.1}
+    image: ghcr.io/loja-veloz/pedidos-service:${APP_VERSION:-1.2.1}
+    container_name: veloz-pedidos-service
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      APP_VERSION: ${APP_VERSION:-1.2.1}
+      PEDIDOS_PORT: 3001
+      ESTOQUE_SERVICE_URL: http://estoque-service:3003
+      PAGAMENTOS_SERVICE_URL: http://pagamentos-service:3002
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-pedidos_veloz}
+      POSTGRES_USER: ${POSTGRES_USER:-veloz_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-veloz_dev_secret_2026}
+      REDIS_URL: redis://redis:6379
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      estoque-service:
+        condition: service_started
+      pagamentos-service:
+        condition: service_started
+    ports:
+    - 127.0.0.1:3001:3001
+    networks:
+    - backend-net
+    - frontend-net
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-1.2.1}
+    image: ghcr.io/loja-veloz/api-gateway:${APP_VERSION:-1.2.1}
+    container_name: veloz-api-gateway
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      APP_VERSION: ${APP_VERSION:-1.2.1}
+      GATEWAY_PORT: 8080
+      PEDIDOS_SERVICE_URL: http://pedidos-service:3001
+      PAGAMENTOS_SERVICE_URL: http://pagamentos-service:3002
+      ESTOQUE_SERVICE_URL: http://estoque-service:3003
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+    depends_on:
+    - pedidos-service
+    - estoque-service
+    - pagamentos-service
+    ports:
+    - 127.0.0.1:8080:8080
+    networks:
+    - frontend-net
+    - backend-net
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: veloz-jaeger
+    restart: unless-stopped
+    environment:
+      COLLECTOR_OTLP_ENABLED: 'true'
+    ports:
+    - 127.0.0.1:16686:16686
+    - 127.0.0.1:4317:4317
+    - 127.0.0.1:4318:4318
+    networks:
+    - backend-net
+    - frontend-net
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: veloz-prometheus
+    restart: unless-stopped
+    volumes:
+    - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    - prometheus_data:/prometheus
+    ports:
+    - 127.0.0.1:9090:9090
+    networks:
+    - backend-net
+    - frontend-net
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: veloz-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-veloz_admin_2026}
+    volumes:
+    - grafana_data:/var/lib/grafana
+    - ./observability/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+    ports:
+    - 127.0.0.1:3000:3000
+    depends_on:
+    - prometheus
+    - jaeger
+    networks:
+    - frontend-net
+networks:
+  frontend-net:
+    name: pedidos-veloz-frontend
+    driver: bridge
+  backend-net:
+    name: pedidos-veloz-backend
+    driver: bridge
+volumes:
+  pgdata:
+    name: pedidos_veloz_pgdata
+  prometheus_data:
+    name: pedidos_veloz_prometheus
+  grafana_data:
+    name: pedidos_veloz_grafana
+  redis_data: {}

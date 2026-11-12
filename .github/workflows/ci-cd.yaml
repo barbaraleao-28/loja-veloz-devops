@@ -1,0 +1,244 @@
+name: "Loja Veloz - CI/CD Pipeline (Pedidos Veloz)"
+
+on:
+  push:
+    branches: ["main", "develop"]
+    tags: ["v*.*.*"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+# Princípio do menor privilégio: cada job amplia só o que precisa.
+permissions:
+  contents: read
+
+# Um novo push na mesma branch cancela a execução anterior (economiza runner).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAMESPACE: ${{ github.repository_owner }}
+  APP_VERSION: "1.2.1"
+  NODE_VERSION: "22"
+
+jobs:
+  # ==========================================================================
+  # JOB 1: Lint de código, Dockerfiles, Compose, manifestos K8s e Terraform
+  # ==========================================================================
+  lint-and-validate:
+    name: "1. Lint e validação (código, Docker, K8s, Terraform)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Verificar sintaxe dos 4 microsserviços
+        run: npm run lint
+
+      - name: Lint dos Dockerfiles (hadolint)
+        run: |
+          for f in services/*/Dockerfile; do
+            echo "::group::$f"
+            docker run --rm -i hadolint/hadolint:v2.12.0 hadolint --failure-threshold error - < "$f"
+            echo "::endgroup::"
+          done
+
+      - name: Validar o docker-compose.yml
+        run: docker compose config --quiet
+
+      - name: Renderizar e validar manifestos Kubernetes (kustomize + kubeconform)
+        run: |
+          kubectl kustomize k8s > /tmp/recursos.yaml
+          docker run --rm -i ghcr.io/yannh/kubeconform:v0.6.7 \
+            -strict -summary -kubernetes-version 1.30.0 - < /tmp/recursos.yaml
+
+      - name: Configurar Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform fmt e validate
+        working-directory: ./terraform
+        run: |
+          terraform init -backend=false
+          terraform fmt -check -recursive
+          terraform validate
+
+  # ==========================================================================
+  # JOB 2: Testes unitários + teste integrado da compra via Docker Compose
+  # ==========================================================================
+  unit-and-integration-tests:
+    name: "2. Testes automatizados (unitários + integração)"
+    runs-on: ubuntu-latest
+    needs: lint-and-validate
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: services/*/package-lock.json
+
+      - name: Instalar dependências a partir dos lockfiles
+        run: |
+          npm ci --prefix services/estoque-service
+          npm ci --prefix services/pedidos-service
+
+      - name: Testes unitários
+        run: npm test
+
+      - name: Senha descartável para o banco de teste
+        run: echo "POSTGRES_PASSWORD=$(openssl rand -hex 20)" >> "$GITHUB_ENV"
+
+      - name: Subir o ambiente completo e executar a compra de ponta a ponta
+        run: |
+          docker compose up -d --build --wait --wait-timeout 240
+          node scripts/smoke.js
+
+      - name: Logs dos containers em caso de falha
+        if: failure()
+        run: docker compose logs --no-color --tail=200
+
+      - name: Encerrar o ambiente
+        if: always()
+        run: docker compose down -v
+
+  # ==========================================================================
+  # JOB 3: Build multi-stage, scan de vulnerabilidades (Trivy) e push no GHCR
+  # ==========================================================================
+  build-scan-and-push:
+    name: "3. Build, scan e push (${{ matrix.service }})"
+    runs-on: ubuntu-latest
+    needs: unit-and-integration-tests
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: true
+      matrix:
+        service:
+          - estoque-service
+          - pagamentos-service
+          - pedidos-service
+          - api-gateway
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login no GitHub Container Registry (token efêmero do job)
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Definir tags (SemVer + SHA imutável do commit)
+        id: vars
+        run: |
+          VERSION="${APP_VERSION}"
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then VERSION="${GITHUB_REF_NAME#v}"; fi
+          IMAGE="${REGISTRY}/${IMAGE_NAMESPACE,,}/${{ matrix.service }}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "sha_tag=${IMAGE}:sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          echo "semver_tag=${IMAGE}:${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Build da imagem multi-stage
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/${{ matrix.service }}
+          load: true
+          build-args: |
+            APP_VERSION=${{ steps.vars.outputs.version }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          tags: |
+            ${{ steps.vars.outputs.semver_tag }}
+            ${{ steps.vars.outputs.sha_tag }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+      - name: Scan de vulnerabilidades (bloqueia HIGH/CRITICAL com correção disponível)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ steps.vars.outputs.semver_tag }}
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+
+      - name: Publicar somente a imagem aprovada no scan
+        if: github.event_name != 'pull_request'
+        run: |
+          docker push "${{ steps.vars.outputs.sha_tag }}"
+          docker push "${{ steps.vars.outputs.semver_tag }}"
+
+  # ==========================================================================
+  # JOB 4: Deploy contínuo (RollingUpdate) com gate de ambiente e rollback
+  # ==========================================================================
+  deploy-kubernetes:
+    name: "4. Deploy RollingUpdate no Kubernetes (produção)"
+    runs-on: ubuntu-latest
+    needs: build-scan-and-push
+    # Só a main publica em produção, e só quando o cluster estiver configurado.
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.DEPLOY_PRODUCTION == 'true'
+    environment:
+      name: production # aprovação manual configurável em Settings > Environments
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Credenciais do cluster a partir do secret KUBE_CONFIG
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+
+      - name: Criar/atualizar o Secret da aplicação a partir dos secrets do GitHub
+        env:
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          PAYMENT_PROVIDER_API_KEY: ${{ secrets.PAYMENT_PROVIDER_API_KEY }}
+        run: |
+          kubectl apply -f k8s/00-namespace.yaml
+          # Os valores nunca aparecem no log: vêm de variáveis mascaradas pelo Actions.
+          kubectl -n pedidos-veloz create secret generic pedidos-veloz-secrets \
+            --from-literal=POSTGRES_USER="$POSTGRES_USER" \
+            --from-literal=POSTGRES_PASSWORD="$POSTGRES_PASSWORD" \
+            --from-literal=PAYMENT_PROVIDER_API_KEY="$PAYMENT_PROVIDER_API_KEY" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Aplicar manifestos (Namespace, ConfigMap, Deployments, Services, HPA, NetworkPolicy, PDB)
+        run: kubectl apply -k k8s
+
+      - name: Atualizar imagens para a tag imutável do commit e acompanhar o rollout
+        run: |
+          for SVC in estoque-service pagamentos-service pedidos-service api-gateway; do
+            kubectl -n pedidos-veloz set image deployment/${SVC} \
+              ${SVC}=${REGISTRY}/${IMAGE_NAMESPACE,,}/${SVC}:sha-${GITHUB_SHA::7}
+            kubectl -n pedidos-veloz annotate deployment/${SVC} --overwrite \
+              kubernetes.io/change-cause="sha-${GITHUB_SHA::7} (${GITHUB_RUN_ID})"
+          done
+          for SVC in estoque-service pagamentos-service pedidos-service api-gateway; do
+            kubectl -n pedidos-veloz rollout status deployment/${SVC} --timeout=180s
+          done
+
+      - name: Rollback automático se algum rollout falhar
+        if: failure()
+        run: |
+          for SVC in estoque-service pagamentos-service pedidos-service api-gateway; do
+            kubectl -n pedidos-veloz rollout undo deployment/${SVC} || true
+          done

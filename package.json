@@ -1,0 +1,12 @@
+{
+  "name": "loja-veloz-pedidos-plataforma",
+  "version": "1.2.1",
+  "private": true,
+  "description": "Plataforma Distribuída de Pedidos em Microsserviços - Loja Veloz (Docker Compose, Kubernetes, CI/CD, Observabilidade e Terraform)",
+  "scripts": {
+    "lint": "node --check services/estoque-service/src/index.js && node --check services/pagamentos-service/src/index.js && node --check services/pedidos-service/src/index.js && node --check services/api-gateway/src/index.js",
+    "test": "node --test services/estoque-service/test/estoque.test.js services/pagamentos-service/test/pagamentos.test.js services/pedidos-service/test/pedidos.test.js services/api-gateway/test/gateway.test.js",
+    "compose:up": "docker compose up -d --build",
+    "compose:down": "docker compose down"
+  }
+}

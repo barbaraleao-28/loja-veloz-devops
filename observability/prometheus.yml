@@ -1,0 +1,39 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: "production"
+    platform: "pedidos-veloz"
+
+scrape_configs:
+  - job_name: "api-gateway"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["api-gateway:8080"]
+        labels:
+          service: "api-gateway"
+          tier: "frontend"
+
+  - job_name: "pedidos-service"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["pedidos-service:3001"]
+        labels:
+          service: "pedidos-service"
+          tier: "backend"
+
+  - job_name: "pagamentos-service"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["pagamentos-service:3002"]
+        labels:
+          service: "pagamentos-service"
+          tier: "backend"
+
+  - job_name: "estoque-service"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["estoque-service:3003"]
+        labels:
+          service: "estoque-service"
+          tier: "backend"

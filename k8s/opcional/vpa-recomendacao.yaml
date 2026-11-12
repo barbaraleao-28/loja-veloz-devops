@@ -1,0 +1,55 @@
+# ============================================================================
+# VPA EM MODO DE RECOMENDAÇÃO (updateMode: "Off")
+# Requer o Vertical Pod Autoscaler instalado no cluster (CRD autoscaling.k8s.io).
+# Fica fora do kustomization.yaml para não quebrar clusters sem o VPA.
+#
+# Estoque e Pagamentos têm réplicas fixas (2) e carga proporcional à de Pedidos.
+# O VPA apenas recomenda requests/limits; ele não reinicia pods. O HPA continua
+# sendo o único mecanismo automático em Pedidos e no Gateway, porque HPA e VPA
+# agindo sobre a mesma métrica (CPU/memória) no mesmo Deployment entram em conflito.
+# Aplicar: kubectl apply -f k8s/opcional/vpa-recomendacao.yaml
+# Consultar: kubectl -n pedidos-veloz describe vpa estoque-service-vpa
+# ============================================================================
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: estoque-service-vpa
+  namespace: pedidos-veloz
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: estoque-service
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: estoque-service
+        minAllowed:
+          cpu: 50m
+          memory: 96Mi
+        maxAllowed:
+          cpu: "1"
+          memory: 512Mi
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: pagamentos-service-vpa
+  namespace: pedidos-veloz
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: pagamentos-service
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+      - containerName: pagamentos-service
+        minAllowed:
+          cpu: 50m
+          memory: 96Mi
+        maxAllowed:
+          cpu: "1"
+          memory: 512Mi

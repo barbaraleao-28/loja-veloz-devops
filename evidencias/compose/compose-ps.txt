@@ -1,0 +1,10 @@
+NAME                       IMAGE                                         STATUS
+veloz-api-gateway          ghcr.io/loja-veloz/api-gateway:1.2.0          Up About a minute (healthy)
+veloz-estoque-service      ghcr.io/loja-veloz/estoque-service:1.2.0      Up About a minute (healthy)
+veloz-grafana              grafana/grafana:11.0.0                        Up About a minute
+veloz-jaeger               jaegertracing/all-in-one:1.57                 Up About a minute
+veloz-pagamentos-service   ghcr.io/loja-veloz/pagamentos-service:1.2.0   Up About a minute (healthy)
+veloz-pedidos-service      ghcr.io/loja-veloz/pedidos-service:1.2.0      Up About a minute (healthy)
+veloz-postgres             postgres:16-alpine                            Up About a minute (healthy)
+veloz-prometheus           prom/prometheus:v2.52.0                       Up About a minute
+veloz-redis-eventos        redis:7.2-alpine                              Up About a minute (healthy)

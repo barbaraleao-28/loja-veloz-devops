@@ -1,0 +1,29 @@
+{
+  "compra": "PED-700706CF",
+  "http_aprovado": 201,
+  "mouse_antes": [
+    200,
+    8
+  ],
+  "mouse_depois": [
+    199,
+    8
+  ],
+  "http_recusado": 422,
+  "notebook_antes": [
+    45,
+    2
+  ],
+  "notebook_depois": [
+    45,
+    2
+  ],
+  "reservas": {
+    "liberada": 1,
+    "baixada": 1
+  },
+  "ordem_dos_saldos": [
+    "disponivel",
+    "reservada"
+  ]
+}

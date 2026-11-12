@@ -1,0 +1,25 @@
+{
+    "traceId":  "174ccf8c841839cd93e12e0121c8d3f2",
+    "spans":  [
+                  {
+                      "servico":  "api-gateway",
+                      "operacao":  "POST /api/pedidos",
+                      "duracao_ms":  1218
+                  },
+                  {
+                      "servico":  "estoque-service",
+                      "operacao":  "POST /estoque/reservar",
+                      "duracao_ms":  67.2
+                  },
+                  {
+                      "servico":  "pedidos-service",
+                      "operacao":  "POST /pedidos",
+                      "duracao_ms":  895.6
+                  },
+                  {
+                      "servico":  "pagamentos-service",
+                      "operacao":  "POST /pagamentos/processar",
+                      "duracao_ms":  3.7
+                  }
+              ]
+}

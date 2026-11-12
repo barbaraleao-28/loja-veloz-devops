@@ -1,0 +1,47 @@
+# ============================================================================
+# PODDISRUPTIONBUDGETS: manutenção de nós (drain, upgrade do cluster) nunca
+# derruba todas as réplicas de um serviço ao mesmo tempo.
+# ============================================================================
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-gateway-pdb
+  namespace: pedidos-veloz
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pedidos-service-pdb
+  namespace: pedidos-veloz
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: pedidos-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: estoque-service-pdb
+  namespace: pedidos-veloz
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: estoque-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: pagamentos-service-pdb
+  namespace: pedidos-veloz
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: pagamentos-service

@@ -1,0 +1,38 @@
+name: Ensaio do vídeo com Compose e Kubernetes
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  demonstracao:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar o ensaio
+        run: |
+          mkdir -p evidencias-run
+          echo "POSTGRES_PASSWORD=$(openssl rand -hex 20)" >> "$GITHUB_ENV"
+      - name: Iniciar os containers e testar a compra
+        run: |
+          docker compose up -d --build --wait --wait-timeout 300
+          docker compose ps | tee evidencias-run/compose.txt
+          node scripts/smoke.js | tee evidencias-run/pedido-compose.json
+      - name: Executar no Kubernetes de laboratório
+        run: bash scripts/demonstrar-cluster.sh
+      - name: Guardar diagnóstico
+        if: always()
+        run: |
+          docker compose ps -a > evidencias-run/estado-compose.txt
+          if kind get clusters | grep -qx loja-video; then
+            kubectl -n pedidos-veloz get events --sort-by=.lastTimestamp > evidencias-run/eventos-cluster.txt
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evidencias-do-ensaio
+          path: evidencias-run/
+      - name: Encerrar o laboratório
+        if: always()
+        run: |
+          kind delete cluster --name loja-video
+          docker compose down -v

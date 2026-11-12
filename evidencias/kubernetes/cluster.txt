@@ -1,0 +1,69 @@
+# Kubernetes do Docker Desktop (Server Version: v1.36.1), namespace pedidos-veloz, 12/11/2026
+# Imagens carregadas no no; PostgreSQL, Redis e Jaeger do Compose conectados a rede kind.
+
+## Estado do cluster
+NAME                                 READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS           IMAGES                                        SELECTOR
+deployment.apps/api-gateway          2/2     2            2           10m   api-gateway          ghcr.io/loja-veloz/api-gateway:1.2.1          app=api-gateway
+deployment.apps/estoque-service      2/2     2            2           10m   estoque-service      ghcr.io/loja-veloz/estoque-service:1.2.1      app=estoque-service
+deployment.apps/pagamentos-service   2/2     2            2           10m   pagamentos-service   ghcr.io/loja-veloz/pagamentos-service:1.2.1   app=pagamentos-service
+deployment.apps/pedidos-service      3/3     3            3           10m   pedidos-service      ghcr.io/loja-veloz/pedidos-service:1.2.1      app=pedidos-service
+
+NAME                                      READY   STATUS    RESTARTS   AGE    IP            NODE                    NOMINATED NODE   READINESS GATES
+pod/api-gateway-777fbfcc88-qhwdh          1/1     Running   0          2m3s   10.244.0.30   desktop-control-plane   <none>           <none>
+pod/api-gateway-777fbfcc88-tn2xs          1/1     Running   0          108s   10.244.0.35   desktop-control-plane   <none>           <none>
+pod/estoque-service-cdcbcc846-7r988       1/1     Running   0          109s   10.244.0.34   desktop-control-plane   <none>           <none>
+pod/estoque-service-cdcbcc846-cqkz8       1/1     Running   0          2m3s   10.244.0.29   desktop-control-plane   <none>           <none>
+pod/pagamentos-service-7d976b4c85-cl2q7   1/1     Running   0          2m3s   10.244.0.32   desktop-control-plane   <none>           <none>
+pod/pagamentos-service-7d976b4c85-tljz2   1/1     Running   0          109s   10.244.0.33   desktop-control-plane   <none>           <none>
+pod/pedidos-service-7885d9469-28hjx       1/1     Running   0          92s    10.244.0.37   desktop-control-plane   <none>           <none>
+pod/pedidos-service-7885d9469-5mbj8       1/1     Running   0          2m3s   10.244.0.31   desktop-control-plane   <none>           <none>
+pod/pedidos-service-7885d9469-ftjkn       1/1     Running   0          108s   10.244.0.36   desktop-control-plane   <none>           <none>
+
+NAME                         TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE   SELECTOR
+service/api-gateway          ClusterIP   10.96.162.147   <none>        80/TCP     10m   app=api-gateway
+service/estoque-service      ClusterIP   10.96.154.11    <none>        3003/TCP   10m   app=estoque-service
+service/pagamentos-service   ClusterIP   10.96.28.100    <none>        3002/TCP   10m   app=pagamentos-service
+service/pedidos-service      ClusterIP   10.96.228.252   <none>        3001/TCP   10m   app=pedidos-service
+
+NAME                                                      REFERENCE                    TARGETS                                     MINPODS   MAXPODS   REPLICAS   AGE
+horizontalpodautoscaler.autoscaling/api-gateway-hpa       Deployment/api-gateway       cpu: <unknown>/70%                          2         10        2          10m
+horizontalpodautoscaler.autoscaling/pedidos-service-hpa   Deployment/pedidos-service   cpu: <unknown>/70%, memory: <unknown>/80%   3         12        3          10m
+
+NAME                                                MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
+poddisruptionbudget.policy/api-gateway-pdb          1               N/A               1                     10m
+poddisruptionbudget.policy/estoque-service-pdb      1               N/A               1                     10m
+poddisruptionbudget.policy/pagamentos-service-pdb   1               N/A               1                     10m
+poddisruptionbudget.policy/pedidos-service-pdb      2               N/A               1                     10m
+
+NAME                                                        POD-SELECTOR   AGE
+networkpolicy.networking.k8s.io/restringir-acesso-backend   tier=backend   10m
+
+## Pod Security Admission (restricted): pod sem securityContext
+kubectl : Error from server (Forbidden): pods "teste-psa" is forbidden: violates PodSecurity "restricted:latest": 
+allowPrivilegeEscalation != false (container "teste-psa" must set securityContext.allowPrivilegeEscalation=false), 
+unrestricted capabilities (container "teste-psa" must set securityContext.capabilities.drop=["ALL"]), runAsNonRoot != 
+true (pod or container "teste-psa" must set securityContext.runAsNonRoot=true), seccompProfile (pod or container 
+"teste-psa" must set securityContext.seccompProfile.type to "RuntimeDefault" or "Localhost")
+No linha:5 caractere:9
++ $psa = (kubectl -n $ns run teste-psa --image=busybox:1.36 --restart=N ...
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Error from serv...or "Localhost"):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+## Rollout 1.2.0 -> 1.2.1 (desligamento gracioso), carga de leitura no Gateway
+Antes da correcao (rollout restart na 1.2.0): {"total":6046,"por_status":{"200":6043,"502":3},"sucesso_pct":99.95}
+Depois da correcao (rollout restart dos 4 servicos na 1.2.1, carga de dentro do cluster):
+{"total":25979,"por_status":{"200":25979},"sucesso_pct":100}
+
+## Historico de revisoes (rollback com kubectl rollout undo)
+deployment.apps/pedidos-service 
+REVISION  CHANGE-CAUSE
+1         <none>
+2         <none>
+3         versao 1.2.1: desligamento gracioso
+4         versao 1.2.1: desligamento gracioso
+
+
+## HPA
+O HPA elevou pedidos-service a 3 replicas e api-gateway a 2 (minReplicas) sem spec.replicas fixo.
+Com o metrics-server instalado depois, o teste de carga escalou o Gateway de 2 para 10 e Pedidos de 3 para 10 replicas: ver hpa.txt.

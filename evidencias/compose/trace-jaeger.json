@@ -1,0 +1,29 @@
+{
+    "traceId":  "e2217ad7403d473fffc24b45a0f9a25a",
+    "spans":  [
+                  {
+                      "servico":  "pedidos-service",
+                      "operacao":  "POST /pedidos",
+                      "spanId":  "413a928db6996c15",
+                      "duracao_ms":  161.2
+                  },
+                  {
+                      "servico":  "api-gateway",
+                      "operacao":  "POST /api/pedidos",
+                      "spanId":  "48c9ee12bd2ae100",
+                      "duracao_ms":  275.4
+                  },
+                  {
+                      "servico":  "estoque-service",
+                      "operacao":  "POST /estoque/reservar",
+                      "spanId":  "22aa85842c5071a1",
+                      "duracao_ms":  64.1
+                  },
+                  {
+                      "servico":  "pagamentos-service",
+                      "operacao":  "POST /pagamentos/processar",
+                      "spanId":  "9971380e08a1a46a",
+                      "duracao_ms":  4.5
+                  }
+              ]
+}

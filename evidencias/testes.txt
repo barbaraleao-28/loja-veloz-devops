@@ -1,0 +1,21 @@
+✔ Gateway sinaliza falha quando Pedidos está indisponível (332.1719ms)
+✔ Painel disponibiliza tabela de pedidos (1.3945ms)
+✔ Gateway responde /health para a livenessProbe (51.5488ms)
+✔ estoque-service: deve reservar item com estoque disponível e atualizar saldo (3.1195ms)
+✔ estoque-service: deve retornar erro 409 quando quantidade solicitada excede estoque (0.4245ms)
+✔ estoque-service: deve retornar erro 404 para SKU inexistente (0.1858ms)
+✔ estoque-service: endpoint HTTP rejeita quantidade inválida antes de acessar o banco (121.0014ms)
+✔ pagamentos-service: deve aprovar pagamento válido dentro do limite operacional (6.6084ms)
+✔ pagamentos-service: deve recusar pagamento acima do teto antifraude (R$ 50.000) (0.4402ms)
+✔ pagamentos-service: deve rejeitar payload sem pedido_id ou valor inválido (0.2228ms)
+✔ pagamentos-service: /ready só indica prontidão quando a chave do provedor está configurada (302.4202ms)
+✔ pedidos-service: deve rejeitar pedido com campos obrigatórios ausentes (2.3871ms)
+✔ pedidos-service: deve rejeitar método de pagamento não suportado (1.3906ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2831.277

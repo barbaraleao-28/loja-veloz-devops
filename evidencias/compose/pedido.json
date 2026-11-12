@@ -1,0 +1,20 @@
+{
+  "http": 201,
+  "pedido": {
+    "pedido_id": "PED-475B842A",
+    "cliente_id": "CLI-TESTE",
+    "sku": "SKU-MOU-04",
+    "produto_nome": "Mouse Wireless UltraLeve 26000 DPI",
+    "quantidade": 1,
+    "valor_total": 289.5,
+    "metodo_pagamento": "PIX",
+    "reserva_id": "RES-9971cfd6-447b-422e-bc73-7364d4e5e8d2",
+    "pagamento_id": "PAY-BBFF9517",
+    "autorizacao_externa": "AUTH-D550C188CA01",
+    "status": "PAGO_E_CONFIRMADO",
+    "trace_id": "e2217ad7403d473fffc24b45a0f9a25a",
+    "criado_em": "2026-11-12T02:47:01.371Z"
+  },
+  "traceId": "e2217ad7403d473fffc24b45a0f9a25a",
+  "consulta": "OK"
+}

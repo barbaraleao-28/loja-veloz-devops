@@ -1,0 +1,14 @@
+{
+  "name": "@loja-veloz/api-gateway",
+  "version": "1.2.1",
+  "description": "API Gateway HTTP e Console de Observabilidade - Plataforma Pedidos Veloz",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test test/gateway.test.js",
+    "lint": "node --check src/index.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
