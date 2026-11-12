@@ -7,7 +7,7 @@ Entrega contínua da aplicação **Pedidos Veloz**: do Docker Compose ao Kuberne
 - [Relatório final da Loja Veloz em PDF](Relatorio_Loja_Veloz_UniFECAF.pdf)
 - [Vídeo da apresentação no YouTube](https://youtu.be/XociYp9OuyI)
 - [Código do projeto no GitHub](https://github.com/barbaraleao-28/loja-veloz-devops)
-- [Registros dos testes](evidencias/) e [capturas de tela](screenshots/)
+- [Registros dos testes](evidencias/). As capturas de tela estão no relatório final.
 
 ## Arquitetura
 
@@ -135,8 +135,6 @@ O workflow `ci-cd.yaml` roda em pull requests, pushes em `main`/`develop` e tags
 4. **Deploy** — `main` + ambiente `production`: cria o Secret, aplica os manifestos, faz o rollout e desfaz automaticamente se falhar.
 
 Para habilitar o deploy, configure no repositório: o ambiente `production` (com aprovação, se desejar), os secrets `KUBE_CONFIG`, `POSTGRES_USER`, `POSTGRES_PASSWORD` e `PAYMENT_PROVIDER_API_KEY` e a variável `DEPLOY_PRODUCTION=true`. Ajuste o namespace das imagens (`ghcr.io/<dono>`) ao proprietário do repositório.
-
-O workflow **Ensaio do vídeo com Compose e Kubernetes** (Actions → Run workflow) sobe o Compose e um cluster kind descartável, faz uma compra em cada ambiente e salva tudo no artefato `evidencias-do-ensaio` — útil para gravar o vídeo sem Docker local.
 
 ## 5. Terraform (esqueleto AWS)
 VPC Multi-AZ, NAT, EKS com node group gerenciado, IAM, RDS PostgreSQL e security group. Nenhum recurso pago foi provisionado.
